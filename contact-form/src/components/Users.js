@@ -2,7 +2,7 @@ import React from "react";
 import 'bulma/css/bulma.css';
 
 const Users = ({ users, back }) => {
-    const UserList = users.length ? (
+    const UserList = users && users.length ? (
         users.map((user, index) => { 
             return(
                 <tr key={`user_${user.id}`}>
