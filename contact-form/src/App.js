@@ -14,7 +14,6 @@ class App extends Component {
   handleUserList = () => this.setState({ showUserList: true });
 
   addUser = (user) => {
-    // console.log(user);
     user.id = Math.random();
     let users = [user];
     try {
@@ -24,8 +23,12 @@ class App extends Component {
           oldData.push(users[0]);
           localStorage.setItem('userData', JSON.stringify(oldData));
           this.handleUserList();
+          
       } else {
         localStorage.setItem('userData', JSON.stringify(users));
+          this.handleUserList();
+
+
       }
     } catch(error) {
       console.log("some error occured", error);

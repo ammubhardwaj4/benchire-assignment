@@ -7,6 +7,8 @@ class AddContact extends Component {
 
     state = {
         errors: {},
+        password: '',
+        confirmPassword: '',
         showPasswordError: false
     }
 
@@ -17,31 +19,66 @@ class AddContact extends Component {
     }
 
     validate = (type, value) => {
-    if (value) {
-        switch (type) {
-            case 'email':
-                var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-                return re.test(value);
-            case 'password':
-                re = /^[A-Za-z0-9!@#$%^&*()_]/;
-                return re.test(value);
-            case 'name':
-                re = /^[a-zA-Z ]{2,30}/;
-                return re.test(value);
-            case 'phone':
-                re = /^\d/;
-                return re.test(value);
-            case 'pinCode':
-                re = /^\d/;
-                return re.test(value);
-            default:
-                return false;
+        if (value) {
+            switch (type) {
+                case 'email':
+                    var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+                    return re.test(value);
+                case 'password':
+                    re = /^[A-Za-z0-9!@#$%^&*()_]/;
+                    return re.test(value);
+                case 'name':
+                    re = /^[a-zA-Z ]{2,30}/;
+                    return re.test(value);
+                case 'phone':
+                    re = /^\d/;
+                    return re.test(value);
+                case 'pinCode':
+                    re = /^\d/;
+                    return re.test(value);
+                case 'address':
+                    re = /([^\s])/;
+                    return re.test(value);
+                default:
+                    return false;
+            }
         }
+        return false;
     }
-    return false;
-}
 
+    handlePasswordChange = (e, id) => {
+        this.setState({[id]: e.target.value}, () => {
+            if (this.state.password && this.state.confirmPassword) {
+                if (this.state.password !== this.state.confirmPassword) {
+                    let errorCopy = Object.create(this.state.errors);
+                    errorCopy['password'] = false;
+                    errorCopy['confirmPassword'] = false;
+                    this.setState({showPasswordError: true, errors: errorCopy})
+                    
+                } 
+                else {
+                    let errorCopy = Object.create(this.state.errors);
+                    errorCopy['password'] = false;
+                    errorCopy['confirmPassword'] = false;
+                    this.setState({ showPasswordError: false, errors: errorCopy })
+                }
+            } else {
+                let errorCopy = Object.create(this.state.errors);
 
+                if (!this.state.password) {
+                    errorCopy['password'] = true;
+
+                } else if (!this.state.confirmPassword) {
+                    errorCopy['confirmPassword'] = true;
+
+                } else {
+                    errorCopy['password'] = false;
+                    errorCopy['confirmPassword'] = false;
+                }             
+                this.setState({ showPasswordError: false, errors: errorCopy })
+            }
+        });
+    }
 
     handleSubmit = (event) => {
         event.preventDefault();
@@ -49,19 +86,17 @@ class AddContact extends Component {
         let formValue = {};
         for (var i = 0; i < target.elements.length - 3; i++) {
             let id = target.elements[i].id,
-            value = target.elements[i].value;
-            formValue[id] = value ;
+                value = target.elements[i].value;
+            formValue[id] = value;
         }
         const fname = this.validate('name', formValue.fname);
         const lname = this.validate('name', formValue.lname);
         const email = this.validate('email', formValue.email);
         const phone = this.validate('phone', formValue.phone);
-        const password = this.validate('name', formValue.password);
-        const cpassword = this.validate('name', formValue.confirmPassword);
-        const address = this.validate('name', formValue.address);
-        if (password && cpassword) {
-            this.setState({ showPasswordError: formValue.password.toLowerCase() === formValue.confirmPassword.toLowerCase() ? false : true})
-        }
+        const password = this.state.showPasswordError ? true : this.validate('password', formValue.password);
+        const cpassword = this.state.showPasswordError ? true : this.validate('password', formValue.confirmPassword);
+        const address = this.validate('address', formValue.address);
+        
         let valid = {
             fname,
             lname,
@@ -81,15 +116,14 @@ class AddContact extends Component {
         errors['address'] = !address;
         if (Object.keys(valid).every((k) => { return valid[k] === true; }) && !this.state.showPasswordError) {
             //props function
-        this.props.addUser(formValue);
+            this.props.addUser(formValue);
         }
         this.setState({ errors });
-        
-        
     }
 
+
+
     render() {
-        
         const fieldDetails = [
             { type: 'text', id: 'fname', placeholder: 'Enter The First Name', text: 'First Name: ', errorText:'Please Enter First Name'},
             { type: 'text', id: 'lname', placeholder: 'Enter The Last Name', text: 'Last Name: ', errorText: 'Please Enter Last Name'}
@@ -102,9 +136,6 @@ class AddContact extends Component {
             { type: 'password', id: 'password', placeholder: 'Enter The Password', text: 'Password: ', errorText: 'Please Enter Password'},
             { type: 'password', id: 'confirmPassword', placeholder: 'Enter The Confirm Password', text: 'Confirm Password: ', errorText: 'Please Enter Confirm Password.'}
         ];
-        // const address = [
-        //     { type: 'textarea', id: 'confirmPassword', placeholder: 'Enter The Confirm Password', text: 'Confirm Password: ' }
-        // ]
 
         return (
             <div className="ContactApp">
@@ -135,7 +166,7 @@ class AddContact extends Component {
                                         <div className="field">
                                             <label className="label" htmlFor={value.id}>{value.text}</label>
                                             <div className="control">
-                                                <input className="input" type={value.type} id={value.id} placeholder={value.placeholder} />
+                                                <input className="input" maxLength={value.type === 'email' ? undefined : "10"} type={value.type} id={value.id} placeholder={value.placeholder} />
                                             </div>
                                             {
                                                 this.state.errors[value.id] ? <p style={{ textAlign: 'left', marginTop: '10px', marginBottom: '10px' }} className="help is-danger level-left">{value.errorText}</p> : null
@@ -152,13 +183,13 @@ class AddContact extends Component {
                                         <div className="field">
                                             <label className="label" htmlFor={value.id}>{value.text}</label>
                                             <div className="control">
-                                                <input className="input" type={value.type} id={value.id} placeholder={value.placeholder} />
+                                                <input className="input" type={value.type} id={value.id} onChange={(e) => this.handlePasswordChange(e, value.id)} placeholder={value.placeholder} />
                                             </div>
                                             {
-                                                this.state.errors[value.id] && !this.state.showPasswordError ? <p style={{ textAlign: 'left', marginTop: '10px', marginBottom: '10px' }} className="help is-danger level-left">{value.errorText}</p> : null
+                                                this.state.errors[value.id] ? <p style={{ textAlign: 'left', marginTop: '10px', marginBottom: '10px' }} className="help is-danger level-left">{value.errorText}</p> : null
                                             }
                                             {
-                                                this.state.showPasswordError && !this.state.errors[value.id] ? <p style={{ textAlign: 'left', marginTop: '10px', marginBottom: '10px' }} className="help is-danger level-left">Value not equal.</p> : null
+                                                this.state.showPasswordError ? <p style={{ textAlign: 'left', marginTop: '10px', marginBottom: '10px' }} className="help is-danger level-left">Value not equal.</p> : null
                                             }
 
                                         </div>
@@ -183,7 +214,7 @@ class AddContact extends Component {
                             <div className="column">
                                 <div className="field is-grouped">
                                     <div className="control">
-                                        <button className="button submit-button">Submit</button>
+                                        <button type="submit" className="button submit-button">Submit</button>
                                     </div>
                                     <div className="control">
                                         <button className="button is-link is-danger" onClick={this.handleReset} >Cancel</button>
